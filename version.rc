@@ -1,0 +1,33 @@
+#include "include\version.h"
+#include <winres.h>
+
+1 VERSIONINFO
+ FILEVERSION OFST_VERSION_MAJOR, OFST_VERSION_MINOR, OFST_VERSION_PATCH, OFST_VERSION_BETA
+ PRODUCTVERSION OFST_VERSION_MAJOR, OFST_VERSION_MINOR, OFST_VERSION_PATCH, OFST_VERSION_BETA
+ FILEFLAGSMASK 0x17L
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "FileDescription", "OffsetUpdater"
+			VALUE "FileVersion", OFST_VERSION_VERSTRING
+            VALUE "InternalName", "OffsetUpdater"
+            VALUE "LegalCopyright", "MIT License"
+            VALUE "ProductName", "OffsetUpdater"
+			VALUE "ProductVersion", OFST_VERSION_VERSTRING
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END

@@ -114,7 +114,7 @@ public:
 		auto results = kmp_search(haystack, sig, mask);
 
 		if (results.size() != 1) {
-			_ERROR("[ERROR] Sig scan failed for pattern (%s)! (%u results found)\n", a_sig, results.size());
+			_ERROR("Sig scan failed for pattern (%s)! (%u results found)\n", a_sig, results.size());
 		} else {
 			_offset = results[0];
 			_address = _offset + REL::Module::BaseAddr();

@@ -22,23 +22,23 @@ namespace
 	{
 		auto beg = a_line.find_first_of('=');
 		if (beg == std::string::npos) {
-			_ERROR("[ERROR] Could not find beginning of offset to update");
+			_ERROR("Could not find beginning of offset to update");
 			return;
 		}
 
 		auto end = a_line.find_first_of(';');
 		if (end == std::string::npos) {
-			_ERROR("[ERROR] Could not find end of offset to update");
+			_ERROR("Could not find end of offset to update");
 			return;
 		}
 
-		char subStr[] = "= 0x________";
+		char subStr[] = "= 0xDEADBEEF";
 		std::snprintf(subStr, sizeof(subStr), "= 0x%08tX", a_newOffset);
 		a_line.replace(beg, end - beg, subStr);
 
 		beg = a_line.find("//", end + 1);
 		if (beg == std::string::npos) {
-			_ERROR("[ERROR] Could not find beginning of comment to update");
+			_ERROR("Could not find beginning of comment to update");
 			return;
 		}
 		end = a_line.size() - 1;
@@ -52,13 +52,13 @@ namespace
 
 		std::ifstream inFile("input.txt");
 		if (!inFile.is_open()) {
-			_ERROR("[ERROR] Failed to open input file!\n");
+			_ERROR("Failed to open input file!\n");
 			return;
 		}
 
 		std::ofstream outFile("output.txt");
 		if (!outFile.is_open()) {
-			_ERROR("[ERROR] Failed to open output file!\n");
+			_ERROR("Failed to open output file!\n");
 			return;
 		}
 
@@ -123,6 +123,7 @@ extern "C" {
 		SKSE::Logger::OpenRelative(FOLDERID_Documents, L"\\My Games\\Skyrim Special Edition\\SKSE\\OffsetUpdater.log");
 		SKSE::Logger::SetPrintLevel(SKSE::Logger::Level::kDebugMessage);
 		SKSE::Logger::SetFlushLevel(SKSE::Logger::Level::kDebugMessage);
+		SKSE::Logger::UseLogStamp(true);
 
 		_MESSAGE("OffsetUpdater v%s", OFST_VERSION_VERSTRING);
 
@@ -131,10 +132,10 @@ extern "C" {
 		a_info->version = OFST_VERSION_MAJOR;
 
 		if (a_skse->IsEditor()) {
-			_FATALERROR("[FATAL ERROR] Loaded in editor, marking as incompatible!\n");
+			_FATALERROR("Loaded in editor, marking as incompatible!\n");
 			return false;
 		} else if (a_skse->RuntimeVersion() != RUNTIME_VERSION_1_5_73) {
-			_FATALERROR("[FATAL ERROR] Unsupported runtime version %08X!\n", a_skse->RuntimeVersion());
+			_FATALERROR("Unsupported runtime version %08X!\n", a_skse->RuntimeVersion());
 			return false;
 		}
 
@@ -144,7 +145,7 @@ extern "C" {
 
 	bool SKSEPlugin_Load(const SKSE::LoadInterface* a_skse)
 	{
-		_MESSAGE("[MESSAGE] OffsetUpdater loaded");
+		_MESSAGE("OffsetUpdater loaded");
 
 		if (!SKSE::Init(a_skse)) {
 			return false;
@@ -152,9 +153,9 @@ extern "C" {
 
 		auto messaging = SKSE::GetMessagingInterface();
 		if (messaging->RegisterListener("SKSE", MessageHandler)) {
-			_MESSAGE("[MESSAGE] Registered SKSE listener");
+			_MESSAGE("Registered SKSE listener");
 		} else {
-			_FATALERROR("[FATAL ERROR] Failed to register SKSE listener!\n");
+			_FATALERROR("Failed to register SKSE listener!\n");
 			return false;
 		}
 

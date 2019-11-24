@@ -15,7 +15,7 @@
 
 namespace
 {
-	constexpr char EXE_VERSION[] = "// 1_5_73";
+	constexpr char EXE_VERSION[] = "// 1_5_97";
 
 
 	void UpdateOffset(std::string& a_line, std::uintptr_t a_newOffset)
@@ -134,7 +134,7 @@ extern "C" {
 		if (a_skse->IsEditor()) {
 			_FATALERROR("Loaded in editor, marking as incompatible!\n");
 			return false;
-		} else if (a_skse->RuntimeVersion() != RUNTIME_VERSION_1_5_73) {
+		} else if (a_skse->RuntimeVersion() != RUNTIME_VERSION_1_5_97) {
 			_FATALERROR("Unsupported runtime version %08X!\n", a_skse->RuntimeVersion());
 			return false;
 		}

@@ -1,6 +1,7 @@
 #include "SigHandler.h"
 
 #include "Relocation.h"
+#include "REL/Relocation.h"
 
 
 SigHandler::SigHandler() :
@@ -16,6 +17,12 @@ SigHandler::SigHandler() :
 	{
 		IndirectSig sig(a_sig);
 		return sig.GetOffset();
+	} });
+
+	_sigFuncMap.insert({ "VTable", [](const char* a_name) -> std::uintptr_t
+	{
+		REL::VTable vtbl(a_name);
+		return vtbl.GetAddress() - REL::Module::BaseAddr();
 	} });
 }
 

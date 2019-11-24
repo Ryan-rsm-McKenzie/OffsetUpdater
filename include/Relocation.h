@@ -6,70 +6,122 @@
 #include <string_view>  // basic_string_view
 #include <vector>  // vector
 
+#include "RE/Skyrim.h"
 #include "REL/Relocation.h"
 
 
-namespace
+namespace Impl
 {
-	// https://en.wikipedia.org/wiki/Knuth-Morris-Pratt_algorithm
-	constexpr std::size_t NPOS = static_cast<std::size_t>(-1);
-
-
-	void kmp_table(const std::vector<std::uint8_t>& W, const std::vector<bool>& M, std::vector<std::size_t>& T)
+	namespace
 	{
-		std::size_t pos = 1;
-		std::size_t cnd = 0;
+		// https://en.wikipedia.org/wiki/Knuth-Morris-Pratt_algorithm
+		constexpr auto NPOS = static_cast<std::size_t>(-1);
 
-		T[0] = NPOS;
 
-		while (pos < W.size()) {
-			if (!M[pos] || !M[cnd] || W[pos] == W[cnd]) {
-				T[pos] = T[cnd];
-			} else {
-				T[pos] = cnd;
-				cnd = T[cnd];
-				while (cnd != NPOS && M[pos] && M[cnd] && W[pos] != W[cnd]) {
+		void kmp_table(const std::basic_string_view<std::uint8_t>& W, std::vector<std::size_t>& T)
+		{
+			std::size_t pos = 1;
+			std::size_t cnd = 0;
+
+			T[0] = NPOS;
+
+			while (pos < W.size()) {
+				if (W[pos] == W[cnd]) {
+					T[pos] = T[cnd];
+				} else {
+					T[pos] = cnd;
 					cnd = T[cnd];
+					while (cnd != NPOS && W[pos] != W[cnd]) {
+						cnd = T[cnd];
+					}
 				}
+				++pos;
+				++cnd;
 			}
-			++pos;
-			++cnd;
+
+			T[pos] = cnd;
 		}
 
-		T[pos] = cnd;
-	}
 
+		void kmp_table(const std::vector<std::uint8_t>& W, const std::vector<bool>& M, std::vector<std::size_t>& T)
+		{
+			std::size_t pos = 1;
+			std::size_t cnd = 0;
 
-	std::vector<std::size_t> kmp_search(const std::basic_string_view<std::uint8_t>& S, const std::vector<std::uint8_t>& W, const std::vector<bool>& M)
-	{
-		std::vector<std::size_t> results;
-		std::size_t j = 0;
-		std::size_t k = 0;
-		std::vector<std::size_t> T(W.size() + 1);
-		kmp_table(W, M, T);
+			T[0] = NPOS;
 
-		while (j < S.size()) {
-			if (!M[k] || W[k] == S[j]) {
-				++j;
-				++k;
-				if (k == W.size()) {
-					results.push_back(j - k);
-					std::vector<std::uint8_t> matched(W.size());
-					for (std::size_t idx = 0; idx < matched.size(); ++idx) {
-						matched[idx] = S[idx + results.back()];
+			while (pos < W.size()) {
+				if (!M[pos] || !M[cnd] || W[pos] == W[cnd]) {
+					T[pos] = T[cnd];
+				} else {
+					T[pos] = cnd;
+					cnd = T[cnd];
+					while (cnd != NPOS && M[pos] && M[cnd] && W[pos] != W[cnd]) {
+						cnd = T[cnd];
 					}
-					k = T[k];
 				}
-			} else {
-				k = T[k];
-				if (k == NPOS) {
+				++pos;
+				++cnd;
+			}
+
+			T[pos] = cnd;
+		}
+
+
+		std::size_t kmp_search(const std::basic_string_view<std::uint8_t>& S, const std::basic_string_view<std::uint8_t>& W)
+		{
+			std::size_t j = 0;
+			std::size_t k = 0;
+			std::vector<std::size_t> T(W.size() + 1);
+			kmp_table(W, T);
+
+			while (j < S.size()) {
+				if (W[k] == S[j]) {
 					++j;
 					++k;
+					if (k == W.size()) {
+						return j - k;
+					}
+				} else {
+					k = T[k];
+					if (k == NPOS) {
+						++j;
+						++k;
+					}
 				}
 			}
+
+			return 0xDEADBEEF;
 		}
 
-		return results;
+
+		std::vector<std::size_t> kmp_search(const std::basic_string_view<std::uint8_t>& S, const std::vector<std::uint8_t>& W, const std::vector<bool>& M)
+		{
+			std::vector<std::size_t> P;
+			std::size_t j = 0;
+			std::size_t k = 0;
+			std::vector<std::size_t> T(W.size() + 1);
+			kmp_table(W, M, T);
+
+			while (j < S.size()) {
+				if (!M[k] || W[k] == S[j]) {
+					++j;
+					++k;
+					if (k == W.size()) {
+						P.push_back(j - k);
+						k = T[k];
+					}
+				} else {
+					k = T[k];
+					if (k == NPOS) {
+						++j;
+						++k;
+					}
+				}
+			}
+
+			return P;
+		}
 	}
 }
 
@@ -110,20 +162,17 @@ public:
 			}
 		}
 
-		std::basic_string_view<std::uint8_t> haystack(REL::Module::BasePtr<std::uint8_t>(), REL::Module::Size());
-		auto results = kmp_search(haystack, sig, mask);
+		auto text = REL::Module::GetSection(REL::Module::ID::kTextX);
+		std::basic_string_view<std::uint8_t> haystack(text.BasePtr<std::uint8_t>(), text.Size());
+		auto results = Impl::kmp_search(haystack, sig, mask);
 
 		if (results.size() != 1) {
-			_ERROR("Sig scan failed for pattern (%s)! (%u results found)\n", a_sig, results.size());
+			_ERROR("Sig scan failed for pattern (%s)! (%zu results found)\n", a_sig, results.size());
 		} else {
-			_offset = results[0];
-			_address = _offset + REL::Module::BaseAddr();
+			_offset = results.front();
+			_address = _offset + text.BaseAddr();
 		}
 	}
-
-
-	~DirectSig()
-	{}
 
 
 	std::uintptr_t GetAddress() const
@@ -158,8 +207,4 @@ public:
 		_address = nextOp + *offset;
 		_offset = _address - REL::Module::BaseAddr();
 	}
-
-
-	~IndirectSig()
-	{}
 };

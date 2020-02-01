@@ -135,7 +135,7 @@ extern "C" {
 			_FATALERROR("Loaded in editor, marking as incompatible!\n");
 			return false;
 		} else if (a_skse->RuntimeVersion() != RUNTIME_VERSION_1_5_97) {
-			_FATALERROR("Unsupported runtime version %08X!\n", a_skse->RuntimeVersion());
+			_FATALERROR("Unsupported runtime version %s!\n", a_skse->UnmangledRuntimeVersion().c_str());
 			return false;
 		}
 
